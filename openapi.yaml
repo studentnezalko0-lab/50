@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Food Delivery API
+  version: 1.0.0
+  description: Онлайн тамақ жеткізу жүйесінің REST API спецификациясы
+servers:
+  - url: http://localhost:8000
+    description: Жергілікті әзірлеу сервері
+
+paths:
+  /health:
+    get:
+      summary: Жүйенің жұмыс күйін тексеру
+      responses:
+        '200':
+          description: Жүйе жұмыс істеп тұр
+
+  /users:
+    post:
+      tags: [Users]
+      summary: Жаңа пайдаланушы тіркеу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Пайдаланушы сәтті құрылды
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Енгізілген деректер қате
+        '409':
+          description: Пайдаланушы бұрын тіркелген
+
+  /users/{userid}:
+    get:
+      tags: [Users]
+      summary: Пайдаланушыны ID арқылы алу
+      parameters:
+        - name: userid
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Пайдаланушы табылды
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Пайдаланушы табылмады
+
+  /restaurants:
+    get:
+      tags: [Restaurants]
+      summary: Мейрамханалар тізімін алу
+      responses:
+        '200':
+          description: Мейрамханалар тізімі
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Restaurant'
+
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Жаңа тапсырыс рәсімдеу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '201':
+          description: Тапсырыс құрылды
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Тапсырыс деректері қате
+        '404':
+          description: Пайдаланушы немесе тағам табылмады
+
+components:
+  schemas:
+    UserCreate:
+      type: object
+      required: [fullname, email]
+      properties:
+        fullname:
+          type: string
+          minLength: 2
+          maxLength: 100
+        email:
+          type: string
+          format: email
+
+    User:
+      type: object
+      required: [userid, fullname, email]
+      properties:
+        userid:
+          type: integer
+          example: 1
+        fullname:
+          type: string
+          example: Асан
+        email:
+          type: string
+          format: email
+          example: user@example.com
+
+    Restaurant:
+      type: object
+      required: [restaurantid, name]
+      properties:
+        restaurantid:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+
+    OrderCreate:
+      type: object
+      required: [userid, items]
+      properties:
+        userid:
+          type: integer
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [productid, quantity]
+            properties:
+              productid:
+                type: integer
+              quantity:
+                type: integer
+                minimum: 1
+
+    Order:
+      type: object
+      required: [orderid, userid, status]
+      properties:
+        orderid:
+          type: integer
+        userid:
+          type: integer
+        status:
+          type: string
+          enum: [NEW, PAID, PREPARING, DELIVERING, DELIVERED, CANCELLED]
